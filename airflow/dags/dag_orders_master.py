@@ -98,6 +98,10 @@ def global_dataset():
 
     return orders_data  
 
+def download_to_master():
+    connect = postgresql_engine()
+    orders_data = global_dataset()
+    orders_data.to_sql('orders', con = connect, schema = 'master', if_exists = 'append', index = False)
 
 with DAG(
           dag_id='orders_generation_1_1',
@@ -106,10 +110,10 @@ with DAG(
           catchup=False
 ) as dag:
 
-          orders_dataset_task = PythonOperator(
-                  task_id = 'download_orders_dataset',
-                  python_callable=global_dataset
+          orders_download_to_master_task = PythonOperator(
+                  task_id = 'orders_download_to_master_1',
+                  python_callable=download_to_master
           )
 
           
-orders_dataset_task  
+orders_download_to_master_task
