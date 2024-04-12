@@ -105,7 +105,7 @@ def download_to_master():
 
 with DAG(
           dag_id='orders_generation_1_1',
-          start_date = datetime(2024, 12, 3),
+          start_date = datetime(2024, 4, 13),
           schedule_interval='0 20 * * *',
           catchup=False
 ) as dag:
