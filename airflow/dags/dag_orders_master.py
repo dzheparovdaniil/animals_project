@@ -3,7 +3,7 @@ import random
 import sqlalchemy
 from airflow import DAG 
 from airflow.operators.python_operator import PythonOperator 
-import datetime import datetime
+from datetime import datetime
 
 def postgresql_engine():
     engine = sqlalchemy.create_engine('postgresql://postgres:postgres123@158.160.159.20:5432/postgres')
