@@ -1,9 +1,9 @@
-import datetime
 import pandas as pd
 import random
 import sqlalchemy
 from airflow import DAG 
 from airflow.operators.python_operator import PythonOperator 
+import datetime import datetime
 
 def postgresql_engine():
     engine = sqlalchemy.create_engine('postgresql://postgres:postgres123@158.160.159.20:5432/postgres')
@@ -80,7 +80,7 @@ def global_dataset():
     def row_gen():
         
         current_id = get_new_order_id()
-        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        current_date = datetime.now().strftime('%Y-%m-%d')
         start_status = 'pending'
         source_path = choose_random_source_path()
         source_path =  '/'.join(source_path)
