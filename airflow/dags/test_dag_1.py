@@ -103,7 +103,7 @@ def download_to_master():
     orders_data.to_sql('orders', con = connect, schema = 'master', if_exists = 'append', index = False)
 
 with DAG(
-          dag_id='orders_generation_1_1',
+          dag_id='test_dag_2',
           start_date = datetime(2024, 4, 13),
           schedule_interval='0 20 * * *',
           catchup=False
