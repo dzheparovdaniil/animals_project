@@ -6,3 +6,4 @@ RUN pip install sqlalchemy
 RUN pip install gspread==5.7.2
 RUN pip install loguru==0.7.2
 RUN pip install pytelegrambotapi==4.14.0
+RUN pip install psycopg2-binary
