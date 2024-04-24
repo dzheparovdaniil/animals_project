@@ -4,8 +4,8 @@ from airflow.operators.python_operator import PythonOperator
 
 with DAG(
           dag_id='master_orders_generation',
-          start_date = datetime(2024, 4, 18),
-          schedule_interval='0 20 * * *',
+          start_date = datetime(2024, 4, 25),
+          schedule_interval='0 13 * * *',
           catchup=False
 ) as dag:
 
