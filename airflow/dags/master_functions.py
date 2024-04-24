@@ -6,9 +6,14 @@ from datetime import datetime
 
 def postgresql_engine():
     """ Функция подключения к БД (мастер-система) """
-    engine = sqlalchemy.create_engine('postgresql://postgres:postgres123@158.160.159.20:5432/postgres')
-    connect = engine.connect()
+    try:
+        engine = sqlalchemy.create_engine('postgresql://postgres:postgres123@158.160.159.20:5432/postgres')
+        connect = engine.connect()
+    except Exception:      
+        print('Не удалось подключиться к БД')
+        raise Exception
     return connect
+    
 
 def get_max_user_list():
     """ Функция получения максимального user_id для последующей генерации данных"""

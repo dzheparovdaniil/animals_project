@@ -1,8 +1,3 @@
-import sqlalchemy
-import psycopg2  
-import pandas as pd
-import random
-from datetime import datetime 
 from master_functions import *
 from airflow import DAG 
 from airflow.operators.python_operator import PythonOperator  
