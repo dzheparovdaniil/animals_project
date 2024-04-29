@@ -136,3 +136,72 @@ def check_order_missed_dates():
         print(f"Количество пропущенных дат: {len(unique_values)}. Пропуски: {', '.join(unique_values)}")
     else:
         print('Нет пропущенных дат')
+
+def get_max_row_id_list_for_items():
+    """ Функция получения максимального id строки для master.orders_items """ 
+    connect = postgresql_engine()
+    max_id = pd.read_sql_query('select max(id) from master.orders_items', con = connect)
+    max_id = max_id['max'].max()
+    return max_id
+
+def get_order_ids_list_for_items():
+    """ Функция получения id заказов, которых еще нет в master.orders_items """
+    q_join = """select * from(
+    select o.id as order_id
+    from 
+    master.orders o 
+    left join master.orders_items oi 
+    on o.id = oi.order_id
+    where oi.order_id is null) as subq
+    group by order_id"""     
+    connect = postgresql_engine()
+    order_ids_list = pd.read_sql_query(q_join, con = connect)
+    order_ids_list = order_ids_list['order_id'].tolist()
+    return order_ids_list
+
+def get_orders_items_dataset(): 
+    
+    order_ids_list = get_order_ids_list_for_items() 
+
+    def get_orders_column_for_orders_items():
+        order_ids_list_for_items = []
+        for order in order_ids_list:
+            probability = random.random()
+            if probability < 0.8:
+                order_ids_list_for_items.append(order)
+            elif probability < 0.91:
+                order_ids_list_for_items.extend([order, order])
+            else:
+                order_ids_list_for_items.extend([order, order, order])
+        return order_ids_list_for_items
+    
+    def get_items_column_for_orders_items():
+        new_items = []
+        order_ids_list_for_items = get_orders_column_for_orders_items()
+        for order in order_ids_list_for_items:
+            new_item = random.randint(1, 11)      
+            new_items.append(new_item)
+        return order_ids_list_for_items, new_items
+    
+    order_ids_list_for_items, new_items = get_items_column_for_orders_items()
+    
+    def get_row_id_column_for_items_orders():
+        max_row_id = get_max_row_id_list_for_items() + 1        
+        len_orders = len(order_ids_list_for_items)
+        row_id_list = [x for x in range(max_row_id, max_row_id+len_orders)]
+        return row_id_list
+    
+    row_id_list = get_row_id_column_for_items_orders()
+    
+    orders_items = pd.DataFrame({"order_id": order_ids_list_for_items, "item_id": new_items})
+    orders_items = orders_items.drop_duplicates(subset=['order_id', 'item_id'])
+    orders_items = orders_items.sort_values(by=['order_id', 'item_id'], ascending=True)
+    orders_items.insert(0, 'id', row_id_list)
+    return orders_items
+
+def download_to_master_orders_items():
+    connect = postgresql_engine()
+    orders_items_data = get_orders_items_dataset()
+    orders_items_data.to_sql('orders_items', con = connect, schema = 'master', if_exists = 'append', index = False)
+
+    
