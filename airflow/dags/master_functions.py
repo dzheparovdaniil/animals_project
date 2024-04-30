@@ -114,7 +114,7 @@ def download_to_master():
     connect = postgresql_engine()
     orders_data = master_orders_dataset()
     orders_data.to_sql('orders', con = connect, schema = 'master', if_exists = 'append', index = False)
-
+    connect.close() 
 
 def check_order_missed_dates():
     connect = postgresql_engine()    
@@ -204,6 +204,7 @@ def download_to_master_orders_items():
     connect = postgresql_engine()
     orders_items_data = get_orders_items_dataset()
     orders_items_data.to_sql('orders_items', con = connect, schema = 'master', if_exists = 'append', index = False)
+    connect.close() 
 
 def get_order_id_and_date_for_crm():
     q_join = """select mo.id, mo.order_date 
@@ -251,3 +252,4 @@ def download_to_master_crm():
     connect = postgresql_engine()
     crm_rent_data = crm_dataset_generation()
     crm_rent_data.to_sql('crm_rent', con = connect, schema = 'master', if_exists = 'append', index = False)
+    connect.close() 
