@@ -2,7 +2,8 @@ import sqlalchemy
 import psycopg2  
 import pandas as pd
 import random
-from datetime import datetime
+import numpy as np
+from datetime import datetime, timedelta
 
 def postgresql_engine():
     """ Функция подключения к БД (мастер-система) """
@@ -160,7 +161,7 @@ def get_order_ids_list_for_items():
     return order_ids_list
 
 def get_orders_items_dataset(): 
-    
+
     order_ids_list = get_order_ids_list_for_items() 
 
     def get_orders_column_for_orders_items():
@@ -204,4 +205,49 @@ def download_to_master_orders_items():
     orders_items_data = get_orders_items_dataset()
     orders_items_data.to_sql('orders_items', con = connect, schema = 'master', if_exists = 'append', index = False)
 
+def get_order_id_and_date_for_crm():
+    q_join = """select mo.id, mo.order_date 
+                from master.orders as mo 
+                left join master.crm_rent crm on mo.id = crm.id
+                where crm.id is null
+                group by mo.id, mo.order_date"""     
+    connect = postgresql_engine()
+    order_ids_and_date = pd.read_sql_query(q_join, con = connect)
+    return order_ids_and_date    
+
+def crm_dataset_generation():
     
+    data_crm = get_order_id_and_date_for_crm()
+    
+    def generate_random_start_days():
+        weights_start_days = [0.2, 0.2, 0.15, 0.15, 0.1, 0.05, 0.05, 0.04, 0.03, 0.03] 
+        choices_start_days = list(range(1, 11))
+        random_start_days = random.choices(choices_start_days, weights=weights_start_days)[0] 
+        return random_start_days
+
+    def generate_random_end_days():
+        weights_end = [0.1, 0.15, 0.15, 0.15, 0.1, 0.1, 0.05, 0.05, 0.05, 0.04, 0.03, 0.03] 
+        choices_end = list(range(1, 13))
+        random_end_days = random.choices(choices_end, weights=weights_end)[0] 
+        return random_end_days
+
+    data_crm['order_date'] = pd.to_datetime(data_crm['order_date'])
+    data_crm['start_date'] = data_crm['order_date'].apply(lambda x: x + timedelta(days=generate_random_start_days()))
+    data_crm['end_date'] = data_crm['start_date'].apply(lambda x: x + timedelta(days=generate_random_end_days()))
+    
+    promocode_list = ['bloger_10', 'bloger_20', 'target_10', 'target_20', 'target_30', 'refer_10', 'refer_20']
+
+    def generate_promocode():
+        if random.random() < 0.77:  
+            return np.nan
+        else:
+            return random.choice(promocode_list)
+        
+    data_crm['promocode'] = data_crm.apply(lambda x: generate_promocode(), axis=1) 
+    
+    return data_crm
+
+def download_to_master_crm():
+    connect = postgresql_engine()
+    crm_rent_data = crm_dataset_generation()
+    crm_rent_data.to_sql('crm_rent', con = connect, schema = 'master', if_exists = 'append', index = False)
