@@ -233,8 +233,8 @@ def crm_dataset_generation():
         return random_end_days
 
     data_crm['order_date'] = pd.to_datetime(data_crm['order_date'])
-    data_crm['start_date'] = data_crm['order_date'].apply(lambda x: x + timedelta(days=generate_random_start_days()))
-    data_crm['end_date'] = data_crm['start_date'].apply(lambda x: x + timedelta(days=generate_random_end_days()))
+    data_crm['rent_start'] = data_crm['order_date'].apply(lambda x: x + timedelta(days=generate_random_start_days()))
+    data_crm['rent_end'] = data_crm['rent_start'].apply(lambda x: x + timedelta(days=generate_random_end_days()))
     
     promocode_list = ['bloger_10', 'bloger_20', 'target_10', 'target_20', 'target_30', 'refer_10', 'refer_20']
 
