@@ -1,44 +1,54 @@
 import sqlalchemy
 import psycopg2  
 import pandas as pd
-import random
 import numpy as np
+import random
+import time
 from datetime import datetime, timedelta
+from loguru import logger
 
 def postgresql_engine():
-    """ Функция подключения к БД (мастер-система) """
-    try:
-        engine = sqlalchemy.create_engine('postgresql://postgres:postgres123@158.160.159.20:5432/postgres')
-        connect = engine.connect()
-    except Exception:      
-        print('Не удалось подключиться к БД')
-        raise Exception
-    return connect
-    
+    """ Функция подключения к БД """
+    attempts = 1
+    max_attempts = 3 + attempts
+    while attempts < max_attempts:
+        try:
+            logger.info(f'Попытка подключения к БД номер {attempts}')
+            engine = sqlalchemy.create_engine('postgresql://postgres:postgres123@158.160.159.20:5432/postgres')
+            connect = engine.connect()
+            return connect 
+        except sqlalchemy.exc.OperationalError as e:
+            logger.error(f'Ошибка sqlalchemy OperationalError: {e}')
+            attempts += 1
+            if attempts < max_attempts:
+                logger.info(f'Ждем 3 минуты перед следующей попыткой...')
+                time.sleep(180)
+                logger.info(f'Пробуем попытку {attempts}')
+            else:
+                pass
+        except Exception as e:      
+            logger.error(f'Проблема с подключением: {e}') 
+            attempts += 1
+            if attempts < max_attempts:
+                logger.info(f'Ждем 50 сек перед следующей попыткой...')
+                time.sleep(50)
+                logger.info(f'Пробуем попытку {attempts}')
+            else:
+                pass
+            
+def get_one_value_from_db(engine, sql_query):
+    """ Функция возврата результата запроса к БД (1 значение) """
+    with engine.connect() as connection:
+        result = connection.execute(sql_query)
+        total_one_value = result.scalar()
+    return total_one_value   
 
-def get_max_user_list():
-    """ Функция получения максимального user_id для последующей генерации данных"""
-    connect = postgresql_engine()
-    max_user = pd.read_sql_query('select max(user_id) as max_user from master.orders', con = connect)
-    max_user = max_user['max_user'].max()
-    max_user_list = [max_user]
-    return max_user_list
-
-def get_max_order_id():
-    """ Функция получения максимального id заказа для последующей генерации данных"""
-    connect = postgresql_engine()
-    max_id = pd.read_sql_query('select max(id) as max_id from master.orders', con = connect)
-    max_id = max_id['max_id'].max()
-    max_id_list = [max_id]
-    return max_id_list
-
-def get_user_id_list():
-    """ Функция получения списка user_id для использования в качестве вернувшихся юзеров (повторных заказов) """
-    connect = postgresql_engine()
-    q = "select user_id from master.orders where order_date < current_date - interval '24 days' group by user_id order by user_id"
-    user_id_list = pd.read_sql_query(q, con = connect)
-    user_id_list = user_id_list['user_id'].tolist()
-    return user_id_list 
+def get_list_from_db(engine, sql_query):
+    """ Функция возврата результата запроса к БД (список) """
+    with engine.connect() as connection:
+        result = connection.execute(sql_query)
+        total_list = [row[0] for row in result.fetchall()]
+    return total_list
 
 def custom_random_len_path():
     """ Функция генерации рандомного количества источников данных от 1 до 5 """
@@ -65,30 +75,41 @@ def choose_random_user_type():
     else:
         return 'new' 
 
-def master_orders_dataset():
-
-    max_user_list_b = get_max_user_list()
-    user_id_list = get_user_id_list()
-    max_order_list = get_max_order_id()
-
+def master_orders_dataset():    
+    """ Запрос максимального user_id """
+    max_user_from_master_orders = """select max(user_id) as max_user from master.orders"""
+    """ Запрос максимального id заказа """
+    max_order_id_from_master_orders = """select max(id) as max_id from master.orders"""
+    """ Запрос списка user_id """
+    user_id_list_for_returns = """select user_id 
+                            from master.orders 
+                            where order_date < current_date - interval '24 days' 
+                            group by user_id order by user_id"""
+    x_conn = postgresql_engine()    
+    x_max_user = get_one_value_from_db(x_conn, max_user_from_master_orders)
+    x_max_user = [x_max_user]
+    x_max_order_id = get_one_value_from_db(x_conn, max_order_id_from_master_orders)
+    x_max_order_id = [x_max_order_id]
+    x_user_id_list = get_list_from_db(x_conn, user_id_list_for_returns)    
+    
     def get_new_order_id():
         """ Функция генерации нового id заказа """  
-        last_orders_id = max_order_list[-1]
+        last_orders_id = x_max_order_id[-1]
         last_orders_id += 1
-        max_order_list.append(last_orders_id)
-        return last_orders_id     
-
+        x_max_order_id.append(last_orders_id)
+        return last_orders_id  
+    
     def get_new_user_id():
         """ Функция генерации нового id покупателя """ 
         choice = choose_random_user_type()
-        last_user_id = max_user_list_b[-1]
+        last_user_id = x_max_user[-1]
         if choice == 'new':
             last_user_id += 1
-            max_user_list_b.append(last_user_id)
+            x_max_user.append(last_user_id)
             return last_user_id 
         elif choice == 'return':
-            return random.choice(user_id_list)
-        
+            return random.choice(x_user_id_list)
+    
     def row_gen_master_orders():
         """ Функция генерации строки для master.orders """   
         current_id = get_new_order_id()
@@ -98,8 +119,8 @@ def master_orders_dataset():
         source_path =  '/'.join(source_path)
         user_id = get_new_user_id()
         order_row = [current_id, current_date, start_status, user_id, source_path]   
-        return order_row  
-
+        return order_row 
+    
     new_row_list = []
     counter = 0
     total_rows = random.randint(2, 7)
@@ -108,12 +129,36 @@ def master_orders_dataset():
         counter = counter + 1
     orders_data = pd.DataFrame(new_row_list, columns = ['id', 'order_date', 'status', 'user_id', 'source_path'])       
 
-    return orders_data
+    return orders_data, x_conn          
 
-def download_to_master():
-    connect = postgresql_engine()
-    orders_data = master_orders_dataset()
-    orders_data.to_sql('orders', con = connect, schema = 'master', if_exists = 'append', index = False)
+def download_to_master(func_dataset, table, schema):
+    """ Функция записи датасета в таблицу БД """
+    data, connect = func_dataset
+    attempts_to_download = 1
+    max_attempts_to_download = 3 + attempts_to_download
+    while attempts_to_download < max_attempts_to_download:
+        try:
+            logger.info(f'Запись данные в БД, попытка номер {attempts_to_download}')
+            data.to_sql(table, con = connect, schema = schema, if_exists = 'append', index = False)
+            break
+        except sqlalchemy.exc.OperationalError as ex:
+            logger.error(f'Ошибка sqlalchemy OperationalError: {ex}')
+            attempts_to_download += 1
+            if attempts_to_download < max_attempts_to_download:
+                logger.info(f'Ждем 3 минуты перед следующей попыткой записи...')
+                time.sleep(180)
+                logger.info(f'Пробуем попытку записи {attempts_to_download}')
+            else:
+                pass
+        except Exception as ex:      
+            logger.error(f'Проблема с записью данных: {ex}') 
+            attempts_to_download += 1
+            if attempts_to_download < max_attempts_to_download:
+                logger.info(f'Ждем 70 сек перед следующей попыткой записи...')
+                time.sleep(70)
+                logger.info(f'Пробуем попытку записи {attempts_to_download}')
+            else:
+                pass    
     connect.close() 
 
 def check_order_missed_dates():
@@ -137,6 +182,7 @@ def check_order_missed_dates():
         print(f"Количество пропущенных дат: {len(unique_values)}. Пропуски: {', '.join(unique_values)}")
     else:
         print('Нет пропущенных дат')
+    connect.close()    
 
 def get_max_row_id_list_for_items():
     """ Функция получения максимального id строки для master.orders_items """ 

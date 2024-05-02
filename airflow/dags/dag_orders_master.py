@@ -11,7 +11,9 @@ with DAG(
 
           orders_download_to_master_task = PythonOperator(
                   task_id = 'orders_download_to_master',
-                  python_callable=download_to_master
+                  python_callable=download_to_master, 
+                  op_kwargs={'func_dataset': master_orders_dataset, 'table': 'orders', 'schema': 'master'}
+
           )
 
           check_order_missed_dates_task = PythonOperator(
