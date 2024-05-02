@@ -292,7 +292,7 @@ def crm_dataset_generation():
         
     data_crm['promocode'] = data_crm.apply(lambda x: generate_promocode(), axis=1) 
     
-    return data_crm
+    return data_crm #test
 
 def download_to_master_crm():
     connect = postgresql_engine()
