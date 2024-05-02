@@ -16,7 +16,16 @@ def postgresql_engine():
             logger.info(f'Попытка подключения к БД номер {attempts}')
             engine = sqlalchemy.create_engine('postgresql://postgres:postgres123@158.160.159.20:5432/postgres')
             connect = engine.connect()
-            return connect 
+            return connect
+        except psycopg2.OperationalError as e:
+            logger.error(f'Ошибка OperationalError: {e}')
+            attempts += 1
+            if attempts < max_attempts:
+                logger.info(f'Ждем 30 сек перед следующей попыткой...')
+                time.sleep(30)
+                logger.info(f'Пробуем попытку {attempts}')
+            else:
+                pass 
         except sqlalchemy.exc.OperationalError as e:
             logger.error(f'Ошибка sqlalchemy OperationalError: {e}')
             attempts += 1
@@ -141,6 +150,15 @@ def download_to_master(func_dataset, table, schema):
             logger.info(f'Запись данные в БД, попытка номер {attempts_to_download}')
             data.to_sql(table, con = connect, schema = schema, if_exists = 'append', index = False)
             break
+        except psycopg2.OperationalError as ex:
+            logger.error(f'Ошибка OperationalError: {ex}')
+            attempts_to_download += 1
+            if attempts_to_download < max_attempts_to_download:
+                logger.info(f'Ждем 40 cек перед следующей попыткой записи...')
+                time.sleep(40)
+                logger.info(f'Пробуем попытку записи {attempts_to_download}')
+            else:
+                pass
         except sqlalchemy.exc.OperationalError as ex:
             logger.error(f'Ошибка sqlalchemy OperationalError: {ex}')
             attempts_to_download += 1
@@ -184,35 +202,22 @@ def check_order_missed_dates():
         print('Нет пропущенных дат')
     connect.close()    
 
-def get_max_row_id_list_for_items():
-    """ Функция получения максимального id строки для master.orders_items """ 
-    connect = postgresql_engine()
-    max_id = pd.read_sql_query('select max(id) from master.orders_items', con = connect)
-    max_id = max_id['max'].max()
-    return max_id
-
-def get_order_ids_list_for_items():
-    """ Функция получения id заказов, которых еще нет в master.orders_items """
-    q_join = """select * from(
+def master_orders_items_dataset(): 
+    max_id_from_orders_items = """select max(id) from master.orders_items"""
+    new_orders_id_for_orders_items = """select * from(
     select o.id as order_id
-    from 
-    master.orders o 
+    from master.orders o 
     left join master.orders_items oi 
     on o.id = oi.order_id
     where oi.order_id is null) as subq
-    group by order_id"""     
-    connect = postgresql_engine()
-    order_ids_list = pd.read_sql_query(q_join, con = connect)
-    order_ids_list = order_ids_list['order_id'].tolist()
-    return order_ids_list
-
-def get_orders_items_dataset(): 
-
-    order_ids_list = get_order_ids_list_for_items() 
-
-    def get_orders_column_for_orders_items():
+    group by order_id"""    
+    x_conn = postgresql_engine()
+    x_max_row_id = get_one_value_from_db(x_conn, max_id_from_orders_items)
+    x_order_ids_list = get_list_from_db(x_conn, new_orders_id_for_orders_items) 
+    
+    def get_orders_column_for_orders_items(x_order_ids_list):
         order_ids_list_for_items = []
-        for order in order_ids_list:
+        for order in x_order_ids_list:
             probability = random.random()
             if probability < 0.8:
                 order_ids_list_for_items.append(order)
@@ -224,7 +229,7 @@ def get_orders_items_dataset():
     
     def get_items_column_for_orders_items():
         new_items = []
-        order_ids_list_for_items = get_orders_column_for_orders_items()
+        order_ids_list_for_items = get_orders_column_for_orders_items(x_order_ids_list)
         for order in order_ids_list_for_items:
             new_item = random.randint(1, 11)      
             new_items.append(new_item)
@@ -233,24 +238,17 @@ def get_orders_items_dataset():
     order_ids_list_for_items, new_items = get_items_column_for_orders_items()
     
     def get_row_id_column_for_items_orders():
-        max_row_id = get_max_row_id_list_for_items() + 1        
+        max_row_id = x_max_row_id + 1        
         len_orders = len(order_ids_list_for_items)
         row_id_list = [x for x in range(max_row_id, max_row_id+len_orders)]
         return row_id_list
     
     row_id_list = get_row_id_column_for_items_orders()
-    
     orders_items = pd.DataFrame({"order_id": order_ids_list_for_items, "item_id": new_items})
     orders_items = orders_items.drop_duplicates(subset=['order_id', 'item_id'])
     orders_items = orders_items.sort_values(by=['order_id', 'item_id'], ascending=True)
     orders_items.insert(0, 'id', row_id_list)
-    return orders_items
-
-def download_to_master_orders_items():
-    connect = postgresql_engine()
-    orders_items_data = get_orders_items_dataset()
-    orders_items_data.to_sql('orders_items', con = connect, schema = 'master', if_exists = 'append', index = False)
-    connect.close() 
+    return orders_items, x_conn
 
 def get_order_id_and_date_for_crm():
     q_join = """select mo.id, mo.order_date 
