@@ -11,7 +11,8 @@ with DAG(
 
           crm_rent_download_to_master_task = PythonOperator(
                   task_id = 'crm_rent_download_to_master',
-                  python_callable=download_to_master_crm
+                  python_callable=download_to_master, 
+                  op_kwargs={'func_dataset': crm_rent_dataset(), 'table': 'crm_rent', 'schema': 'master'}                  
           )
           
 crm_rent_download_to_master_task

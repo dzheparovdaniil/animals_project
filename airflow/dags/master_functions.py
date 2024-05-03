@@ -180,6 +180,7 @@ def download_to_master(func_dataset, table, schema):
     connect.close() 
 
 def check_order_missed_dates():
+    """ Функция проверки пропущенных дат в master.orders """
     connect = postgresql_engine()    
     q = """with recursive cte as (
         select min(order_date) as min_date, max(order_date) as max_date
@@ -203,7 +204,9 @@ def check_order_missed_dates():
     connect.close()    
 
 def master_orders_items_dataset(): 
+    """ Запрос максимального id строки для таблицы orders_items """
     max_id_from_orders_items = """select max(id) from master.orders_items"""
+    """ Запрос новых order_id для добавления из orders в orders_items """
     new_orders_id_for_orders_items = """select * from(
     select o.id as order_id
     from master.orders o 
@@ -216,6 +219,7 @@ def master_orders_items_dataset():
     x_order_ids_list = get_list_from_db(x_conn, new_orders_id_for_orders_items) 
     
     def get_orders_column_for_orders_items(x_order_ids_list):
+        """ Функция, создающая повторы order_id для присваивания item_id """
         order_ids_list_for_items = []
         for order in x_order_ids_list:
             probability = random.random()
@@ -226,18 +230,20 @@ def master_orders_items_dataset():
             else:
                 order_ids_list_for_items.extend([order, order, order])
         return order_ids_list_for_items
-    
+
     def get_items_column_for_orders_items():
+        """ Функция генерации рандомного item_id от 1 до 11 """
         new_items = []
         order_ids_list_for_items = get_orders_column_for_orders_items(x_order_ids_list)
         for order in order_ids_list_for_items:
             new_item = random.randint(1, 11)      
             new_items.append(new_item)
         return order_ids_list_for_items, new_items
-    
+
     order_ids_list_for_items, new_items = get_items_column_for_orders_items()
     
     def get_row_id_column_for_items_orders():
+        """ Функция генерации id строки """
         max_row_id = x_max_row_id + 1        
         len_orders = len(order_ids_list_for_items)
         row_id_list = [x for x in range(max_row_id, max_row_id+len_orders)]
@@ -250,27 +256,30 @@ def master_orders_items_dataset():
     orders_items.insert(0, 'id', row_id_list)
     return orders_items, x_conn
 
-def get_order_id_and_date_for_crm():
-    q_join = """select mo.id, mo.order_date 
-                from master.orders as mo 
-                left join master.crm_rent crm on mo.id = crm.id
-                where crm.id is null
-                group by mo.id, mo.order_date"""     
-    connect = postgresql_engine()
-    order_ids_and_date = pd.read_sql_query(q_join, con = connect)
-    return order_ids_and_date    
+def get_table_from_db(engine, sql_query):
+    result_table = pd.read_sql_query(sql_query, con = engine)
+    return result_table   
 
-def crm_dataset_generation():
+def crm_rent_dataset():
+    """ Запрос таблицы с новыми id заказа и даты заказа, которых еще нет в crm_rent """
+    id_date_for_crm = """select mo.id, mo.order_date 
+            from master.orders as mo 
+            left join master.crm_rent crm on mo.id = crm.id
+            where crm.id is null
+            group by mo.id, mo.order_date"""    
+    x_conn = postgresql_engine()
     
-    data_crm = get_order_id_and_date_for_crm()
+    data_crm = get_table_from_db(x_conn, id_date_for_crm)
     
     def generate_random_start_days():
+        """ Функция генерации рандомной даты начала аренды """
         weights_start_days = [0.2, 0.2, 0.15, 0.15, 0.1, 0.05, 0.05, 0.04, 0.03, 0.03] 
         choices_start_days = list(range(1, 11))
         random_start_days = random.choices(choices_start_days, weights=weights_start_days)[0] 
         return random_start_days
 
     def generate_random_end_days():
+        """ Функция генерации рандомной даты окончания аренды """
         weights_end = [0.1, 0.15, 0.15, 0.15, 0.1, 0.1, 0.05, 0.05, 0.05, 0.04, 0.03, 0.03] 
         choices_end = list(range(1, 13))
         random_end_days = random.choices(choices_end, weights=weights_end)[0] 
@@ -283,6 +292,7 @@ def crm_dataset_generation():
     promocode_list = ['bloger_10', 'bloger_20', 'target_10', 'target_20', 'target_30', 'refer_10', 'refer_20']
 
     def generate_promocode():
+        """ Функция генерации рандомного промокода (при наличии) из списка промокодов """
         if random.random() < 0.77:  
             return np.nan
         else:
@@ -290,10 +300,4 @@ def crm_dataset_generation():
         
     data_crm['promocode'] = data_crm.apply(lambda x: generate_promocode(), axis=1) 
     
-    return data_crm #test
-
-def download_to_master_crm():
-    connect = postgresql_engine()
-    crm_rent_data = crm_dataset_generation()
-    crm_rent_data.to_sql('crm_rent', con = connect, schema = 'master', if_exists = 'append', index = False)
-    connect.close() 
+    return data_crm, x_conn
