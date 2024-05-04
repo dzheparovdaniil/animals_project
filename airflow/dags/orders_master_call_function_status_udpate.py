@@ -1,19 +1,27 @@
-from airflow import DAG
-from airflow.operators.postgres_operator import PostgresOperator
+import sqlalchemy
+import psycopg2  
+from master_functions import postgresql_engine
 from datetime import datetime
+from loguru import logger
+from airflow import DAG
+from airflow.operators.postgres_operator import PythonOperator
 
-dag = DAG(
-    dag_id='call_function_pending_update',
-    schedule_interval='10 13 * * *',  
-    start_date=datetime(2024, 4, 25),
-    catchup=False
-)
+def call_function_refresh():
+    connection = postgresql_engine()
+    sql_query = "SELECT master.f_orders_status_update();"
+    connection.execute(sql_query)
+    connection.close()
 
-call_postgres_function_refrash_status = PostgresOperator(
-    task_id='function_refrash_status',
-    postgres_conn_id='animals_postgres', 
-    sql="SELECT f_orders_status_update()",
-    dag=dag
-)
+with DAG(
+          dag_id='call_function_pending_update',
+          start_date = datetime(2024, 4, 30),
+          schedule_interval='20 13 * * *',
+          catchup=False
+) as dag:
 
-call_postgres_function_refrash_status
+          call_refresh_master_orders = PythonOperator(
+                  task_id = 'call_function_pending_update_task',
+                  python_callable=call_function_refresh
+          )
+          
+call_refresh_master_orders 
