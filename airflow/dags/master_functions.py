@@ -241,18 +241,18 @@ def master_orders_items_dataset():
         return order_ids_list_for_items, new_items
 
     order_ids_list_for_items, new_items = get_items_column_for_orders_items()
+    orders_items = pd.DataFrame({"order_id": order_ids_list_for_items, "item_id": new_items})    
+    orders_items = orders_items.drop_duplicates(subset=['order_id', 'item_id'])
+    orders_items = orders_items.sort_values(by=['order_id', 'item_id'], ascending=True)
     
     def get_row_id_column_for_items_orders():
         """ Функция генерации id строки """
         max_row_id = x_max_row_id + 1        
-        len_orders = len(order_ids_list_for_items)
+        len_orders = len(orders_items)
         row_id_list = [x for x in range(max_row_id, max_row_id+len_orders)]
         return row_id_list
     
     row_id_list = get_row_id_column_for_items_orders()
-    orders_items = pd.DataFrame({"order_id": order_ids_list_for_items, "item_id": new_items})
-    orders_items = orders_items.drop_duplicates(subset=['order_id', 'item_id'])
-    orders_items = orders_items.sort_values(by=['order_id', 'item_id'], ascending=True)
     orders_items.insert(0, 'id', row_id_list)
     return orders_items, x_conn
 
