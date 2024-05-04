@@ -6,7 +6,7 @@ services:
     container_name: PostgresCont 
     restart: always
     environment:
-      - POSTGRES_USER=postgres
+      - POSTGRES_USER=demid
       - POSTGRES_PASSWORD=postgres123
     ports:
       - '5432:5432'

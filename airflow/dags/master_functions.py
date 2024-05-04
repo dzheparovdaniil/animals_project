@@ -257,6 +257,7 @@ def master_orders_items_dataset():
     return orders_items, x_conn
 
 def get_table_from_db(engine, sql_query):
+    """ Функция возврата результата запроса к БД (таблица) """
     result_table = pd.read_sql_query(sql_query, con = engine)
     return result_table   
 
