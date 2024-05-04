@@ -3,8 +3,8 @@ import psycopg2
 from master_functions import postgresql_engine
 from datetime import datetime
 from loguru import logger
-from airflow import DAG
-from airflow.operators.postgres_operator import PythonOperator
+from airflow import DAG 
+from airflow.operators.python_operator import PythonOperator
 
 def call_function_refresh():
     connection = postgresql_engine()
