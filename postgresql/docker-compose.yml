@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       - POSTGRES_USER=demid
-      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_PASSWORD=demid123
     ports:
       - '5432:5432'
     volumes:
