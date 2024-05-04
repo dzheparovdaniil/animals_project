@@ -11,8 +11,8 @@ dag = DAG(
 
 call_postgres_function_refrash_status = PostgresOperator(
     task_id='function_refrash_status',
-    postgres_conn_id='animals_postgres_connection', 
-    sql="SELECT postgres.master.f_orders_status_update();",
+    postgres_conn_id='animals_postgres', 
+    sql="SELECT f_orders_status_update()",
     dag=dag
 )
 
