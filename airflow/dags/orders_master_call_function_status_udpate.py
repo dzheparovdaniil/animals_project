@@ -1,15 +1,29 @@
-import sqlalchemy
-import psycopg2  
-from master_functions import postgresql_engine
+from master_functions import *
 from datetime import datetime
 from loguru import logger
 from airflow import DAG 
 from airflow.operators.python_operator import PythonOperator
+import psycopg2
 
-def call_function_refresh():
-    connection = postgresql_engine()
-    sql_query = "SELECT master.f_orders_status_update();"
-    connection.execute(sql_query)
+def execute_sql_query_pending_update():
+    
+    connection = psycopg2.connect(
+        dbname='postgres',
+        user='demid',
+        password='demid123',
+        host='158.160.159.20',
+        port='5432'
+    )
+
+    cursor = connection.cursor()
+    sql_query = "SELECT master.function_orders_status_update();"
+    cursor.execute(sql_query)
+    connection.commit()
+
+    result = cursor.fetchone()
+    print(result)
+
+    cursor.close()
     connection.close()
 
 with DAG(
@@ -21,7 +35,7 @@ with DAG(
 
           call_refresh_master_orders = PythonOperator(
                   task_id = 'call_function_pending_update_task',
-                  python_callable=call_function_refresh
+                  python_callable=execute_sql_query_pending_update
           )
           
 call_refresh_master_orders 
