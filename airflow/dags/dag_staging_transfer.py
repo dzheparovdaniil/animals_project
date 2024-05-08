@@ -38,7 +38,7 @@ def staging_items_dataset():
 
 with DAG(
           dag_id='staging_transfer',
-          start_date = datetime(2024, 5, 8),
+          start_date = datetime(2024, 5, 7),
           schedule_interval='0 14 * * *',
           catchup=False
 ) as dag:
