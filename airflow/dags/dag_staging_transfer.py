@@ -21,6 +21,9 @@ def staging_orders_dataset():
                                     left join master.crm_rent crm ON mo.id = crm.id
                                     where mo.order_date >= '{}' order by mo.id""".format(last_val)     
     orders_for_staging_data = get_table_from_db(engine, actual_master_orders_query)
+    delete_sql_query = f"DELETE FROM staging.orders WHERE order_date >= '{last_val}'"
+    engine.execute(delete_sql_query)
+    print(f"Удалены строки в таблице staging.orders начиная с даты {last_val}")
     return orders_for_staging_data, engine 
 
 def staging_items_dataset():
