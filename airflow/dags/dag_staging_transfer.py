@@ -4,7 +4,7 @@ from airflow.operators.python_operator import PythonOperator
 
 def staging_orders_dataset():
     engine = postgresql_engine()
-    min_date = """select min(order_date_mo) as min_date 
+    min_date = """select coalesce(min(order_date_mo), current_date) as min_date 
                   from(select mo.id as id_mo, 
                   so.id as id_so, 
                   mo.order_date as order_date_mo, 
