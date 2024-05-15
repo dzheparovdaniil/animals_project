@@ -2,7 +2,7 @@ version: '3'
 
 services:
   clickhouse-server:
-    image: altinity/clickhouse-server:21.12.3.32.altinitydev.arm
+    image: yandex/clickhouse-server:latest
     ports:
       - "8123:8123" 
       - "9000:9000" 
