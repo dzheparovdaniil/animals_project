@@ -11,7 +11,7 @@ def execute_sql_query_pending_update():
         dbname='postgres',
         user='demid',
         password='demid123',
-        host='158.160.172.4',
+        host='158.160.147.246',
         port='5432'
     )
 
