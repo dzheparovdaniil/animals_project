@@ -14,7 +14,7 @@ def postgresql_engine():
     while attempts < max_attempts:
         try:
             logger.info(f'Попытка подключения к БД номер {attempts}')
-            engine = sqlalchemy.create_engine('postgresql://demid:demid123@158.160.147.246:5432/postgres')
+            engine = sqlalchemy.create_engine('postgresql://demid:demid123@158.160.169.66:5432/postgres')
             connect = engine.connect()
             return connect
         except psycopg2.OperationalError as e:
