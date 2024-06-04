@@ -4,9 +4,9 @@ from airflow.operators.python_operator import PythonOperator
 
 def staging_orders_dataset():
     engine = postgresql_engine()
-    min_id = """select min(mo.id) as min_id
-                        from master.orders mo left join staging.total_orders so on mo.id = so.id
-                        where so.id is null"""  
+    min_id = """select coalesce(min(mo.id), (select max(id) + 1 from master.orders)) as min_id
+                from master.orders mo left join staging.total_orders so on mo.id = so.id
+                where so.id is null"""  
     last_val = get_one_value_from_db(engine, min_id)
     actual_master_orders_query = """select mo.id, mo.order_date, mo.status, 
                                     mo.user_id, mo.source_path, crm.rent_start, crm.rent_end,
