@@ -31,7 +31,7 @@ with DAG(
 
           call_refresh_master_orders = PythonOperator(
                   task_id = 'call_function_pending_update_for_master_task',
-                  python_callable=master_status_update()
+                  python_callable=master_status_update
           )
           
 call_refresh_master_orders 
