@@ -13,7 +13,7 @@ def refresh_mat_view():
 
 with DAG(
           dag_id='refresh_mat_view_staging',
-          start_date = datetime(2024, 6, 14),
+          start_date = datetime(2024, 6, 13),
           schedule_interval='45 14 * * *',
           catchup=False
 ) as dag:
