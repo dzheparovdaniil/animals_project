@@ -302,3 +302,41 @@ def crm_rent_dataset():
     data_crm['promocode'] = data_crm.apply(lambda x: generate_promocode(), axis=1) 
     
     return data_crm, x_conn
+
+def staging_costs_dataset():
+    x_conn = postgresql_engine()
+    
+    cost_source = ['yandex-cpc', 'vk-cpc', 'google organic', 'yandex organic']
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    cost_data = pd.DataFrame(cost_source, columns=['cost_source'])
+    cost_data['cost_date'] = current_date
+    cost_data  = cost_data [['cost_date', 'cost_source']]
+    
+    def generate_cost(row):
+        if row['cost_source'] == 'yandex-cpc':
+            return round(random.uniform(9000.00, 13000.50), 2)
+        elif row['cost_source'] == 'vk-cpc':
+            return round(random.uniform(4000.00, 8000.75), 2)
+        elif row['cost_source'] == 'google organic':
+            return round(random.uniform(2500.00, 3800.75), 2)
+        elif row['cost_source'] == 'yandex organic':
+            return round(random.uniform(2500.00, 4100.75), 2)
+        else:
+            return 0.0
+        
+    def generate_visits(row):
+        if row['cost_source'] == 'yandex-cpc':
+            return np.random.randint(760, 1451)
+        elif row['cost_source'] == 'vk-cpc':
+            return np.random.randint(730, 1601)
+        elif row['cost_source'] == 'google organic':
+            return np.random.randint(690, 1201)
+        elif row['cost_source'] == 'yandex organic':
+            return np.random.randint(700, 1300)
+        else:
+            return 0
+        
+    cost_data['visits'] = cost_data.apply(lambda row: generate_visits(row), axis=1)
+    cost_data['costs'] = cost_data.apply(lambda row: generate_cost(row), axis=1)
+    
+    return cost_data, x_conn
