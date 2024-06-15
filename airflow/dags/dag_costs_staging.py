@@ -4,7 +4,7 @@ from airflow.operators.python_operator import PythonOperator
 
 with DAG(
           dag_id='staging_costs_generation',
-          start_date = datetime(2024, 6, 14),
+          start_date = datetime(2024, 6, 13),
           schedule_interval='10 13 * * *',
           catchup=False
 ) as dag:
