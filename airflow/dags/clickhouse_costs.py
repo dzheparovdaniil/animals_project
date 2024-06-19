@@ -20,7 +20,7 @@ def clickhouse_costs_transfer_function():
 
 with DAG(
           dag_id='clickhouse_dwh_costs_transfer',
-          start_date = datetime(2024, 6, 18),
+          start_date = datetime(2024, 6, 17),
           schedule_interval='15 15 * * *',
           catchup=False
 ) as dag:
