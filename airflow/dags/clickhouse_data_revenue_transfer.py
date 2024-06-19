@@ -5,7 +5,7 @@ import clickhouse_connect
 
 def clickhouse_tranfser_to_data_function():
     client = clickhouse_connect.get_client(host='158.160.169.66', username='', password='') 
-    inter_query = ''' SELECT idr.* FROM my_database.inter_data_revenue idr LEFT JOIN my_database.data_revenue dr ON idr.row_id = dr.row_id WHERE dr.row_id = 0'''
+    inter_query = ''' SELECT idr.* FROM my_database.inter_data_revenue idr LEFT JOIN my_database.data_revenue dr ON idr.row_id = dr.row_id WHERE dr.row_id = 0 and idr.status <> 'pending' '''
     result = client.query(inter_query)
     result_data = result.result_rows
     pandas_data = pd.DataFrame(result_data, columns=['row_id', 'order_id', 'order_date', 'status', 'source_path', 'user_id', 'promocode', 'item_id', 'country_id',
