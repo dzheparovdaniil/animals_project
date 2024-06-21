@@ -1,8 +1,6 @@
 from master_functions import *
-from datetime import datetime
 from airflow import DAG 
 from airflow.operators.python_operator import PythonOperator
-from sqlalchemy import create_engine
 
 def staging_status_update():
     db_uri = 'postgresql://demid:demid123@158.160.169.66:5432/postgres'

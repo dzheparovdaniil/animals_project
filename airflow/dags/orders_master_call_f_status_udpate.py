@@ -5,18 +5,11 @@ from airflow.operators.python_operator import PythonOperator
 from sqlalchemy import create_engine
 
 def master_status_update():
-    db_uri = 'postgresql://demid:demid123@158.160.169.66:5432/postgres'
-
-    # объект подключения к базе данных
-    engine = create_engine(db_uri)
-
-    connection = engine.connect()
+    """ Функция для совершения транзакции обновления статуса """
+    connection = postgresql_engine()
     trans = connection.begin()
 
-    # Вызов функции staging.function_orders_status_update() и получение результата
     result = connection.execute("SELECT master.function_orders_status_update();").fetchone()
-
-    # Вывод результата
     print(result[0])
 
     trans.commit()
