@@ -1,8 +1,7 @@
 from master_functions import *
-from datetime import datetime
 from airflow import DAG 
 from airflow.operators.python_operator import PythonOperator
-from sqlalchemy import create_engine
+
 
 def master_status_update():
     """ Функция для совершения транзакции обновления статуса """
