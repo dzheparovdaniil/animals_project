@@ -89,35 +89,35 @@ def master_orders_dataset():
     max_user_from_master_orders = """select max(user_id) as max_user from master.orders"""
     """ Запрос максимального id заказа """
     max_order_id_from_master_orders = """select max(id) as max_id from master.orders"""
-    """ Запрос списка user_id """
+    """ Запрос списка исторических user_id """
     user_id_list_for_returns = """select user_id 
                             from master.orders 
                             where order_date < current_date - interval '24 days' 
                             group by user_id order by user_id"""
     x_conn = postgresql_engine()    
-    x_max_user = get_one_value_from_db(x_conn, max_user_from_master_orders)
-    x_max_user = [x_max_user]
-    x_max_order_id = get_one_value_from_db(x_conn, max_order_id_from_master_orders)
-    x_max_order_id = [x_max_order_id]
-    x_user_id_list = get_list_from_db(x_conn, user_id_list_for_returns)    
+    max_user = get_one_value_from_db(x_conn, max_user_from_master_orders)
+    max_user = [max_user]
+    max_order_id = get_one_value_from_db(x_conn, max_order_id_from_master_orders)
+    max_order_id = [max_order_id]
+    user_id_list = get_list_from_db(x_conn, user_id_list_for_returns)    
     
     def get_new_order_id():
         """ Функция генерации нового id заказа """  
-        last_orders_id = x_max_order_id[-1]
+        last_orders_id = max_order_id[-1]
         last_orders_id += 1
-        x_max_order_id.append(last_orders_id)
+        max_order_id.append(last_orders_id)
         return last_orders_id  
     
     def get_new_user_id():
         """ Функция генерации нового id покупателя """ 
         choice = choose_random_user_type()
-        last_user_id = x_max_user[-1]
+        last_user_id = max_user[-1]
         if choice == 'new':
             last_user_id += 1
-            x_max_user.append(last_user_id)
+            max_user.append(last_user_id)
             return last_user_id 
         elif choice == 'return':
-            return random.choice(x_user_id_list)
+            return random.choice(user_id_list)
     
     def row_gen_master_orders():
         """ Функция генерации строки для master.orders """   
