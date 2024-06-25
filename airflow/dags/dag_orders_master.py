@@ -17,8 +17,8 @@ with DAG(
           )
 
           check_order_missed_dates_task = PythonOperator(
-                  task_id = 'func_check_order_missed_dates',
-                  python_callable=check_order_missed_dates
+                  task_id = 'check_missed_dates_task',
+                  python_callable=check_missed_dates
           )
           
 orders_download_to_master_task>>check_order_missed_dates_task

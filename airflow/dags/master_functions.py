@@ -179,7 +179,7 @@ def download_to_postgres(func_dataset, table, schema):
                 pass    
     connect.close() 
 
-def check_order_missed_dates():
+def check_missed_dates():
     """ Функция проверки пропущенных дат в master.orders """
     connect = postgresql_engine()    
     q = """with recursive cte as (
