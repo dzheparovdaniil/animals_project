@@ -11,7 +11,7 @@ with DAG(
 
           orders_items_download_to_master_task = PythonOperator(
                   task_id = 'orders_items_download_to_master',
-                  python_callable=download_to_master, 
+                  python_callable=download_to_postgres, 
                   op_kwargs={'func_dataset': master_orders_items_dataset(), 'table': 'orders_items', 'schema': 'master'}
           )
           

@@ -11,7 +11,7 @@ with DAG(
 
           costs_download_to_staging_task = PythonOperator(
                   task_id = 'costs_download_to_staging',
-                  python_callable=download_to_master, 
+                  python_callable=download_to_postgres, 
                   op_kwargs={'func_dataset': staging_costs_dataset(), 'table': 'costs', 'schema': 'staging'}                  
           )
           

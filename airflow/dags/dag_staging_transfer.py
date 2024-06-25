@@ -39,13 +39,13 @@ with DAG(
 
           orders_staging_task = PythonOperator(
                   task_id = 'orders_staging_transfer',
-                  python_callable=download_to_master, 
+                  python_callable=download_to_postgres, 
                   op_kwargs={'func_dataset': staging_orders_dataset(), 'table': 'total_orders', 'schema': 'staging'}
           )
 
           items_staging_task = PythonOperator(
                   task_id = 'items_staging_transfer',
-                  python_callable=download_to_master, 
+                  python_callable=download_to_postgres, 
                   op_kwargs={'func_dataset': staging_items_dataset(), 'table': 'items', 'schema': 'staging'}
           )
           

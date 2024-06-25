@@ -140,7 +140,7 @@ def master_orders_dataset():
 
     return orders_data, x_conn          
 
-def download_to_master(func_dataset, table, schema):
+def download_to_postgres(func_dataset, table, schema):
     """ Функция записи датасета в таблицу БД """
     data, connect = func_dataset
     attempts_to_download = 1
