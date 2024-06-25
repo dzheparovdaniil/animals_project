@@ -15,7 +15,7 @@ with DAG(
 ) as dag:
 
           call_refresh_staging_mat_view = PythonOperator(
-                  task_id = 'call_refresh_staging_mat_view_task',
+                  task_id = 'revenue_data_refresh_task',
                   python_callable=refresh_mat_view
           )
           

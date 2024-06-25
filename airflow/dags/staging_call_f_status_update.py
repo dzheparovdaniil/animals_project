@@ -21,7 +21,7 @@ with DAG(
 ) as dag:
 
           call_refresh_staging_orders = PythonOperator(
-                  task_id = 'call_function_pending_update_for_staging_task',
+                  task_id = 'call_pending_update_staging_task',
                   python_callable=staging_status_update
           )
           

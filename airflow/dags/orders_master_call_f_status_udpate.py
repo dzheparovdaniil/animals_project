@@ -22,7 +22,7 @@ with DAG(
 ) as dag:
 
           call_refresh_master_orders = PythonOperator(
-                  task_id = 'call_function_pending_update_for_master_task',
+                  task_id = 'call_pending_update_master_task',
                   python_callable=master_status_update
           )
           
