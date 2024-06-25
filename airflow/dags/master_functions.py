@@ -215,13 +215,13 @@ def master_orders_items_dataset():
     where oi.order_id is null) as subq
     group by order_id"""    
     x_conn = postgresql_engine()
-    x_max_row_id = get_one_value_from_db(x_conn, max_id_from_orders_items)
-    x_order_ids_list = get_list_from_db(x_conn, new_orders_id_for_orders_items) 
+    result_max_row_id = get_one_value_from_db(x_conn, max_id_from_orders_items)
+    result_order_ids_list = get_list_from_db(x_conn, new_orders_id_for_orders_items) 
     
-    def get_orders_column_for_orders_items(x_order_ids_list):
+    def get_orders_column_for_orders_items(result_order_ids_list):
         """ Функция, создающая повторы order_id для присваивания item_id """
         order_ids_list_for_items = []
-        for order in x_order_ids_list:
+        for order in result_order_ids_list:
             probability = random.random()
             if probability < 0.8:
                 order_ids_list_for_items.append(order)
@@ -234,7 +234,7 @@ def master_orders_items_dataset():
     def get_items_column_for_orders_items():
         """ Функция генерации рандомного item_id от 1 до 11 """
         new_items = []
-        order_ids_list_for_items = get_orders_column_for_orders_items(x_order_ids_list)
+        order_ids_list_for_items = get_orders_column_for_orders_items(result_order_ids_list)
         for order in order_ids_list_for_items:
             new_item = random.randint(1, 11)      
             new_items.append(new_item)
@@ -247,7 +247,7 @@ def master_orders_items_dataset():
     
     def get_row_id_column_for_items_orders():
         """ Функция генерации id строки """
-        max_row_id = x_max_row_id + 1        
+        max_row_id = result_max_row_id + 1        
         len_orders = len(orders_items)
         row_id_list = [x for x in range(max_row_id, max_row_id+len_orders)]
         return row_id_list
